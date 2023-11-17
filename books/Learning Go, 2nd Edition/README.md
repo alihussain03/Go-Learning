@@ -1,4 +1,6 @@
 # Chapter high level descriptions 
+Book link 
+https://learning.oreilly.com/library/view/learning-go-2nd/9781098139285/
 
 1. Chapter1
 1. Chapter2
