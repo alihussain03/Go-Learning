@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"sort"
 	"time"
 )
 
@@ -19,17 +22,202 @@ func main() {
 	fmt.Println("Pointer Receiver")
 	pointerReceiver()
 
-	fmt.Println("Code Your Methods for nil Instances")
+	fmt.Println("\nCode Your Methods for nil Instances")
 	checkforNil()
 
-	fmt.Println("Methods Are Functions")
+	fmt.Println("\nMethods Are Functions")
 	methodsAreFunctions()
 
-	fmt.Println("Type Declarations Aren’t Inheritance")
+	fmt.Println("\nType Declarations Aren’t Inheritance")
 	Inheritance()
 
+	fmt.Println("\nUse of iota")
+	iotA()
+
+	fmt.Println("\nUse Embedding for Composition")
+	useEmbeddingForComposition()
+
+	fmt.Println("\nFirst Interface")
+	firstInterface()
+
+	fmt.Println("\nExercise")
+	ex()
 }
 
+type Team struct {
+	Name    string
+	Players []string
+}
+
+type League struct {
+	Name  string
+	Teams map[string]Team
+	Wins  map[string]int
+}
+
+func (l *League) MatchResult(team1 string, score1 int, team2 string, score2 int) {
+	if _, ok := l.Teams[team1]; !ok {
+		return
+	}
+	if _, ok := l.Teams[team2]; !ok {
+		return
+	}
+	if score1 == score2 {
+		return
+	}
+	if score1 > score2 {
+		l.Wins[team1]++
+	} else {
+		l.Wins[team2]++
+	}
+}
+
+func (l League) Ranking() []string {
+	names := make([]string, 0, len(l.Teams))
+	for k := range l.Teams {
+		names = append(names, k)
+	}
+	sort.Slice(names, func(i, j int) bool {
+		return l.Wins[names[i]] > l.Wins[names[j]]
+	})
+	return names
+}
+
+func ex() {
+	l := League{
+		Name: "Big League",
+		Teams: map[string]Team{
+			"Italy": {
+				Name:    "Italy",
+				Players: []string{"Player1", "Player2", "Player3", "Player4", "Player5"},
+			},
+			"France": {
+				Name:    "France",
+				Players: []string{"Player1", "Player2", "Player3", "Player4", "Player5"},
+			},
+			"India": {
+				Name:    "India",
+				Players: []string{"Player1", "Player2", "Player3", "Player4", "Player5"},
+			},
+			"Nigeria": {
+				Name:    "Nigeria",
+				Players: []string{"Player1", "Player2", "Player3", "Player4", "Player5"},
+			},
+		},
+		Wins: map[string]int{},
+	}
+	l.MatchResult("Italy", 50, "France", 70)
+	l.MatchResult("India", 85, "Nigeria", 80)
+	l.MatchResult("Italy", 60, "India", 55)
+	l.MatchResult("France", 100, "Nigeria", 110)
+	l.MatchResult("Italy", 65, "Nigeria", 70)
+	l.MatchResult("France", 95, "India", 80)
+	results := l.Ranking()
+	fmt.Println(results)
+
+	RankPrinter(l, os.Stdout)
+}
+
+type Incrementer interface {
+	Increment()
+}
+
+type Ranker interface {
+	Ranking() []string
+}
+
+func RankPrinter(r Ranker, w io.Writer) {
+	results := r.Ranking()
+	for _, v := range results {
+		io.WriteString(w, v)
+		w.Write([]byte("\n"))
+	}
+}
+
+func firstInterface() {
+	var myStringer fmt.Stringer
+	var myIncrementer Incrementer
+	pointerCounter := &Counter{}
+	valueCounter := Counter{}
+
+	myStringer = pointerCounter    // ok
+	myStringer = valueCounter      // ok
+	myIncrementer = pointerCounter // ok
+	// myIncrementer = valueCounter   // compile-time error!
+
+	fmt.Println(myStringer, myIncrementer)
+}
+
+type Employeee struct {
+	Name string
+	ID   string
+}
+
+type Manager struct {
+	Employeee
+	Reports []Employeee
+}
+
+func (e Employeee) Description() string {
+	return fmt.Sprintf("%s (%s)", e.Name, e.ID)
+}
+
+func useEmbeddingForComposition() {
+
+	m := Manager{
+		Employeee: Employeee{
+			Name: "Bob Bobson",
+			ID:   "12345",
+		},
+		Reports: []Employeee{},
+	}
+	fmt.Println(m.ID) // prints 12345
+	fmt.Println(m.Description())
+
+	//Embedding is not inheritence
+	fmt.Println("\nEmbedding is not inheritence")
+	o := Outer{
+		Inner: Inner{
+			A: 10,
+		},
+		S: "Hello",
+	}
+	fmt.Println(o.Double())
+}
+
+type Inner struct {
+	A int
+}
+
+func (i Inner) IntPrinter(val int) string {
+	return fmt.Sprintf("Inner: %d", val)
+}
+
+func (i Inner) Double() string {
+	return i.IntPrinter(i.A * 2)
+}
+
+type Outer struct {
+	Inner
+	S string
+}
+
+func (o Outer) IntPrinter(val int) string {
+	return fmt.Sprintf("Outer: %d", val)
+}
+
+const (
+	Field1 = 0
+	Field2 = 1 + iota
+	Field3 = 20
+	Field4
+	Field5 = iota
+)
+
+func iotA() {
+
+	fmt.Println(Field1, Field2, Field3, Field4, Field5)
+}
 func Inheritance() {
 	type Score int
 	type HighScore Score
