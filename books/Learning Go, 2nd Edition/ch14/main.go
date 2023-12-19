@@ -2,16 +2,39 @@ package main
 
 import (
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 )
 
+type Item struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Order struct {
+	ID          string      `json:"id"`
+	Items       []Item      `json:"items"`
+	DateOrdered RFC822ZTime `json:"date_ordered"`
+	CustomerID  string      `json:"customer_id"`
+}
+
+type RFC822ZTime struct {
+	time.Time
+}
+
 func main() {
+
+	//IO and friends
+
 	fmt.Println("Pointer Receiver")
 	fileName := "file.txt"
+
+	fmt.Println(fileName)
 
 	//create empty file
 	createEmptyFile(fileName)
@@ -36,7 +59,69 @@ func main() {
 	fmt.Println()
 	//Seek interface
 	readerFromFileUsingSeek(fileName)
-	fmt.Println()
+	//End IO and friends
+
+	//time
+	timefunc()
+
+	//json encoding
+	jsonConvert()
+}
+
+func jsonConvert() {
+	fmt.Println("Json convert Start \n\n")
+	data := `
+	{
+		"id": "12345",
+		"items": [
+			{
+				"id": "xyz123",
+				"name": "Thing 1"
+			},
+			{
+				"id": "abc789",
+				"name": "Thing 2"
+			}
+		],
+		"date_ordered": "01 May 20 13:01 +0000",
+		"customer_id": "3"
+	}`
+
+	var o Order
+	err := json.Unmarshal([]byte(data), &o)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v\n", o)
+	fmt.Println(o.DateOrdered.Month())
+}
+
+func timefunc() {
+	p := fmt.Println
+	p("\n\nStart Date function")
+	now := time.Now()
+	p(now)
+
+	then := time.Date(
+		2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+	p(then)
+
+	p(then.Year())
+	p(then.Month())
+	p(then.Day())
+	p(then.Hour())
+	p(then.Minute())
+	p(then.Second())
+	p(then.Nanosecond())
+	p(then.Location())
+	p(then.Weekday())
+
+	p(then.Before(now))
+	p(then.After(now))
+	p(then.Equal(now))
+
+	p("End Date function\n\n")
+
 }
 
 func gzipCountLetters() error {
